@@ -5,6 +5,8 @@ from PIL import Image
 def loadImages(app):
     # Load the PIL image
     app.imageDict = {
+        #images are from chess.com but I got them from https://github.com/lichess-org/lila/issues/3411
+        #the background of the images were removed with https://www.remove.bg/
         "BlackKing": "Piecesimages/BlackKing.png",
         "BlackQueen": "Piecesimages/BlackQueen.png",
         "BlackBishop": "Piecesimages/BlackBishop.png",

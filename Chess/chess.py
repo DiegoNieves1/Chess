@@ -69,6 +69,7 @@ def drawBoard(app):
                         (app.boardHeightPixels/app.cols),fill=rgb(235,236,210))
     #these nested loops draw the pieces which are all copied from chess.com
     #images are from chess.com but I got them from https://github.com/lichess-org/lila/issues/3411
+    #the background of the images were removed with https://www.remove.bg/
     for row in range(app.rows):
         for col in range(app.cols):
             if app.board[row][col]=='BlackKing':

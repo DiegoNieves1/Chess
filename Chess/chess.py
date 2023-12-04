@@ -459,42 +459,106 @@ def removeEnpassants(app):
 def castle(app,row,col):
     if (app.board[row][col]=='WhiteRook' and row==7 and col==7
         and app.board[7][6]==None and app.board[7][5]==None
-        and app.clickedRow==7 and app.clickedCol==4 and not app.whiteKingMoved and not app.whiteRook1Moved):
+        and app.clickedRow==7 and app.clickedCol==4 and not app.whiteKingMoved 
+        and not app.whiteRook1Moved and not app.whiteInCheck):
         app.whiteKingMoved=True
         app.board[7][5]='WhiteRook'
         app.board[7][6]='WhiteKing'
         app.board[row][col]=None
         app.board[app.clickedRow][app.clickedCol]=None
+        clicked=app.clicked
+        clickedRow=app.clickedRow
+        clickedCol=app.clickedCol
+        app.clicked=None
+        app.clickedRow=None
+        app.clickedCol=None
+        if whiteInCheck(app):
+            app.clicked=clicked
+            app.clickedRow=clickedRow
+            app.clickedCol=clickedCol
+            app.board[app.clickedRow][app.clickedCol]='WhiteKing'
+            app.board[row][col]='WhiteRook'
+            app.board[7][5]=None
+            app.board[7][6]=None
+            return False
         app.turn+=1
         return False
     elif (app.board[row][col]=='WhiteRook' and row==7 and col==0
         and app.board[7][1]==None and app.board[7][2]==None and app.board[7][3]==None
-        and app.clickedRow==7 and app.clickedCol==4 and not app.whiteKingMoved and not app.whiteRook2Moved):
+        and app.clickedRow==7 and app.clickedCol==4 and not app.whiteKingMoved
+        and not app.whiteRook2Moved and not app.whiteInCheck):
         app.whiteKingMoved=True
         app.board[7][3]='WhiteRook'
         app.board[7][2]='WhiteKing'
         app.board[row][col]=None
         app.board[app.clickedRow][app.clickedCol]=None
+        clicked=app.clicked
+        clickedRow=app.clickedRow
+        clickedCol=app.clickedCol
+        app.clicked=None
+        app.clickedRow=None
+        app.clickedCol=None
+        if whiteInCheck(app):
+            app.clicked=clicked
+            app.clickedRow=clickedRow
+            app.clickedCol=clickedCol
+            app.board[app.clickedRow][app.clickedCol]='WhiteKing'
+            app.board[row][col]='WhiteRook'
+            app.board[7][3]=None
+            app.board[7][2]=None
+            return False
         app.turn+=1
         return False
     elif (app.board[row][col]=='BlackRook' and row==0 and col==7
         and app.board[0][6]==None and app.board[0][5]==None
-        and app.clickedRow==0 and app.clickedCol==4 and not app.blackKingMoved and not app.blackRook1Moved):
+        and app.clickedRow==0 and app.clickedCol==4 and not app.blackKingMoved
+        and not app.blackRook1Moved and not app.blackInCheck):
         app.blackKingMoved=True
         app.board[0][5]='BlackRook'
         app.board[0][6]='BlackKing'
         app.board[row][col]=None
         app.board[app.clickedRow][app.clickedCol]=None
+        clicked=app.clicked
+        clickedRow=app.clickedRow
+        clickedCol=app.clickedCol
+        app.clicked=None
+        app.clickedRow=None
+        app.clickedCol=None
+        if blackInCheck(app):
+            app.clicked=clicked
+            app.clickedRow=clickedRow
+            app.clickedCol=clickedCol
+            app.board[app.clickedRow][app.clickedCol]='BlackKing'
+            app.board[row][col]='BlackRook'
+            app.board[0][6]=None
+            app.board[0][5]=None
+            return False
         app.turn+=1
         return False
     elif (app.board[row][col]=='BlackRook' and row==0 and col==0
         and app.board[0][1]==None and app.board[0][2]==None and app.board[0][3]==None
-        and app.clickedRow==0 and app.clickedCol==4 and not app.blackKingMoved and not app.blackRook2Moved):
+        and app.clickedRow==0 and app.clickedCol==4 and not app.blackKingMoved
+        and not app.blackRook2Moved and not app.blackInCheck):
         app.blackKingMoved=True
         app.board[0][3]='BlackRook'
         app.board[0][2]='BlackKing'
         app.board[row][col]=None
         app.board[app.clickedRow][app.clickedCol]=None
+        clicked=app.clicked
+        clickedRow=app.clickedRow
+        clickedCol=app.clickedCol
+        app.clicked=None
+        app.clickedRow=None
+        app.clickedCol=None
+        if blackInCheck(app):
+            app.clicked=clicked
+            app.clickedRow=clickedRow
+            app.clickedCol=clickedCol
+            app.board[app.clickedRow][app.clickedCol]='BlackKing'
+            app.board[row][col]='BlackRook'
+            app.board[0][3]=None
+            app.board[0][2]=None
+            return False
         app.turn+=1
         return False
     return False

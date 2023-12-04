@@ -29,6 +29,9 @@ def onAppStart(app):
     app.blackPawnIsPromoting=False
     app.whiteInCheck=False
     app.blackInCheck=False
+    app.whiteInCheckmate=False
+    app.blackInCheckmate=False
+    app.stepsPerSecond=5
     app.whitePawnPromotionBoard=['WhiteQueen','WhiteKnight','WhiteRook','WhiteBishop']
     app.blackPawnPromotionBoard=['BlackQueen','BlackKnight','BlackRook','BlackBishop']
     pass
@@ -36,11 +39,14 @@ def redrawAll(app):
     drawBoard(app)
     if app.whitePawnIsPromoting or app.blackPawnIsPromoting:
         drawPawnPromotionOptions(app)
-    print(app.whiteInCheck)
-    if app.whiteInCheck==True:
+    if app.whiteInCheck and app.whiteInCheckmate==False:
         drawLabel('White In Check!!!',app.width/2,50,size=40,fill='white', bold=True)
-    if app.blackInCheck==True:
+    if app.blackInCheck and app.blackInCheckmate==False:
         drawLabel('Black In Check!!!',app.width/2,50,size=40,fill='white', bold=True)
+    if app.whiteInCheckmate==True:
+        drawLabel('Black Wins!!!',app.width/2,50,size=40,fill='white',bold=True)
+    if app.blackInCheckmate==True:
+        drawLabel('White Wins!!!',app.width/2,50,size=40,fill='white',bold=True)
     pass
 
 def drawBoard(app):
@@ -180,8 +186,6 @@ def movePiece(app,mouseX,mouseY):
                 app.clicked=app.board[row][col]
                 app.clickedRow=row
                 app.clickedCol=col
-                app.whiteInCheck=whiteInCheck(app)
-                app.blackInCheck=blackInCheck(app)
             #switching positions of piece and adding one to the turn
             elif ((mouseX>(100+(app.boardWidthPixels/app.cols)*col)
             and mouseX<((100+(app.boardWidthPixels/app.cols)*col)+app.boardWidthPixels/app.rows))
@@ -191,19 +195,21 @@ def movePiece(app,mouseX,mouseY):
                 app.board[app.clickedRow][app.clickedCol]=None
                 app.board[row][col]=app.clicked
                 app.turn+=1
-                app.whiteInCheck=whiteInCheck(app)
-                app.blackInCheck=blackInCheck(app)
+                # if app.whiteInCheck==True:
+                #     app.whiteInCheckmate=whiteInCheckmate(app)
+                # if app.blackInCheck==True:
+                #     app.blackInCheckmate==blackInCheckmate(app)
                 app.clicked=None
                 app.clickedRow=None
                 app.clickedCol=None
+                app.whiteInCheck=whiteInCheck(app)
+                app.blackInCheck=blackInCheck(app)
                 removeEnpassants(app)
             elif ((mouseX>(100+(app.boardWidthPixels/app.cols)*col)
             and mouseX<((100+(app.boardWidthPixels/app.cols)*col)+app.boardWidthPixels/app.rows))
             and(mouseY>(100+(app.boardHeightPixels/app.rows)*row)
             and mouseY<((100+(app.boardHeightPixels/app.rows)*row)+app.boardHeightPixels/app.cols))
             and app.clicked!=None):
-                app.whiteInCheck=whiteInCheck(app)
-                app.blackInCheck=blackInCheck(app)
                 app.clicked=None
                 app.clickedRow=None
                 app.clickedCol=None
@@ -214,7 +220,7 @@ def isLegal(app,row,col):
 
     if app.turn%2==0 and 'Black' in app.clicked:
         return False
-    if app.turn%2==1 and 'White' in app.clicked:
+    elif app.turn%2==1 and 'White' in app.clicked:
         return False
 
     # conditions for pieces to be able to move
@@ -223,21 +229,24 @@ def isLegal(app,row,col):
         and app.clickedCol-col>-2 and app.clickedRow-row<2
         and app.clickedRow-row>-2
         and nothingInWayDiagonally(app,row,col)
-        and nothingInWayVerHornally(app,row,col)) or castle(app,row,col))):
+        and nothingInWayVerHornally(app,row,col)) or castle(app,row,col))
+         and ifWhiteInCheck(app,row,col)):
         app.whiteKingMoved=True
         return True
-    if (app.clicked == 'WhiteQueen' and ((app.clickedRow==row or app.clickedCol==col)
+    elif (app.clicked == 'WhiteQueen' and ((app.clickedRow==row or app.clickedCol==col)
                                           or (((app.clickedCol-col)/(app.clickedRow-row)==1)
                                                or ((app.clickedCol-col)/(app.clickedRow-row)==-1)))
                                                and nothingInWayDiagonally(app,row,col)
-                                               and nothingInWayVerHornally(app,row,col)):
+                                               and nothingInWayVerHornally(app,row,col)
+                                                and ifWhiteInCheck(app,row,col)):
         return True
-    if (app.clicked == 'WhiteBishop' and app.clickedCol!=col
+    elif (app.clicked == 'WhiteBishop' and app.clickedCol!=col
          and app.clickedRow!=row and (((app.clickedCol-col)/(app.clickedRow-row)==1)
                                        or ((app.clickedCol-col)/(app.clickedRow-row)==-1))
-                                       and nothingInWayDiagonally(app,row,col)):
+                                       and nothingInWayDiagonally(app,row,col)
+                                        and ifWhiteInCheck(app,row,col)):
         return True
-    if (app.clicked == 'WhiteKnight' and ((app.clickedRow-row==1 
+    elif (app.clicked == 'WhiteKnight' and ((app.clickedRow-row==1 
                                           and app.clickedCol-col==2) 
                                           or (app.clickedRow-row==-1 
                                           and app.clickedCol-col==-2) 
@@ -253,38 +262,42 @@ def isLegal(app,row,col):
                                           and app.clickedRow-row==2)
                                           or (app.clickedCol-col==1
                                           and app.clickedRow-row==-2))
-                                          and knightHelper(app,row,col)):
+                                          and knightHelper(app,row,col)
+                                          and ifWhiteInCheck(app,row,col)):
         return True
-    if (app.clicked == 'WhiteRook' and (app.clickedRow==row or app.clickedCol==col)
-        and nothingInWayVerHornally(app,row,col)):
+    elif (app.clicked == 'WhiteRook' and (app.clickedRow==row or app.clickedCol==col)
+        and nothingInWayVerHornally(app,row,col) and ifWhiteInCheck(app,row,col)):
         if app.clickedRow==7 and app.clickedCol==7:
             app.whiteRook1Moved=True
         if app.clickedRow==7 and app.clickedCol==0:
             app.whiteRook2Moved=True
         return True
-    if (app.clicked == 'WhitePawn' and nothingInWayVerHornally(app,row,col)
-        and pawnMoves(app,row,col)):
+    elif (app.clicked == 'WhitePawn' and nothingInWayVerHornally(app,row,col)
+        and pawnMoves(app,row,col) and ifWhiteInCheck(app,row,col)):
         pawnPromoting(app,row,col)
         return True
-    if (app.clicked == 'BlackKing' and ((app.clickedCol-col<2
+    elif (app.clicked == 'BlackKing' and ((app.clickedCol-col<2
         and app.clickedCol-col>-2 and app.clickedRow-row<2
         and app.clickedRow-row>-2
         and nothingInWayDiagonally(app,row,col)
-        and nothingInWayVerHornally(app,row,col)) or castle(app,row,col))):
+        and nothingInWayVerHornally(app,row,col)) or castle(app,row,col))
+        and ifBlackInCheck(app,row,col)):
         app.blackKingMoved=True
         return True
-    if (app.clicked == 'BlackQueen' and ((app.clickedRow==row or app.clickedCol==col)
+    elif (app.clicked == 'BlackQueen' and ((app.clickedRow==row or app.clickedCol==col)
                                           or (((app.clickedCol-col)/(app.clickedRow-row)==1)
                                                or ((app.clickedCol-col)/(app.clickedRow-row)==-1)))
                                                and nothingInWayDiagonally(app,row,col)
-                                               and nothingInWayVerHornally(app,row,col)):
+                                               and nothingInWayVerHornally(app,row,col)
+                                               and ifBlackInCheck(app,row,col)):
         return True
-    if (app.clicked == 'BlackBishop' and app.clickedCol!=col
+    elif (app.clicked == 'BlackBishop' and app.clickedCol!=col
          and app.clickedRow!=row and (((app.clickedCol-col)/(app.clickedRow-row)==1)
                                        or ((app.clickedCol-col)/(app.clickedRow-row)==-1))
-                                       and nothingInWayDiagonally(app,row,col)):
+                                       and nothingInWayDiagonally(app,row,col)
+                                       and ifBlackInCheck(app,row,col)):
         return True
-    if (app.clicked == 'BlackKnight' and ((app.clickedRow-row==1 
+    elif (app.clicked == 'BlackKnight' and ((app.clickedRow-row==1 
                                           and app.clickedCol-col==2) 
                                           or (app.clickedRow-row==-1 
                                           and app.clickedCol-col==-2) 
@@ -300,17 +313,18 @@ def isLegal(app,row,col):
                                           and app.clickedRow-row==2)
                                           or (app.clickedCol-col==1
                                           and app.clickedRow-row==-2))
-                                          and knightHelper(app,row,col)):
+                                          and knightHelper(app,row,col)
+                                          and ifBlackInCheck(app,row,col)):
         return True
-    if (app.clicked == 'BlackRook' and (app.clickedRow==row or app.clickedCol==col)
-        and nothingInWayVerHornally(app,row,col)):
+    elif (app.clicked == 'BlackRook' and (app.clickedRow==row or app.clickedCol==col)
+        and nothingInWayVerHornally(app,row,col) and ifBlackInCheck(app,row,col)):
         if app.clickedRow==0 and app.clickedCol==7:
             app.blackRook1Moved=True
         if app.clickedRow==0 and app.clickedCol==0:
             app.blackRook2Moved=True
         return True
-    if (app.clicked == 'BlackPawn' and nothingInWayVerHornally(app,row,col)
-        and pawnMoves(app,row,col)):
+    elif (app.clicked == 'BlackPawn' and nothingInWayVerHornally(app,row,col)
+        and pawnMoves(app,row,col) and ifBlackInCheck(app,row,col)):
         pawnPromoting(app,row,col)
         return True
     return False
@@ -494,9 +508,9 @@ def knightHelper(app,row,col):
 
 def pawnPromoting(app,row,col):
     if app.board[app.clickedRow][app.clickedCol]=='WhitePawn' and row==0:
-        promotePawn(app,row,col)
+        promotePawn(app)
     elif app.board[app.clickedRow][app.clickedCol]=='BlackPawn' and row==7:
-        promotePawn(app,row,col)
+        promotePawn(app)
 
 def promotePawn(app):
     if app.board[app.clickedRow][app.clickedCol]=='WhitePawn':
@@ -562,7 +576,8 @@ def whiteInCheck(app):
                 whiteKingCol=col
     for row in range(len(app.board)):
         for col in range(len(app.board[0])):
-            if (app.board[row][col]!=None and 'Black' in app.board[row][col]):
+            if (app.board[row][col]!=None and 'Black' in app.board[row][col]
+                and 'Enpassant' not in app.board[row][col]):
                 if isInCheck(app,row,col,whiteKingRow,whiteKingCol):
                     return True
                 else:
@@ -577,13 +592,15 @@ def blackInCheck(app):
                 blackKingCol=col
     for row in range(len(app.board)):
         for col in range(len(app.board[0])):
-            if (app.board[row][col]!=None and 'White' in app.board[row][col]):
+            if (app.board[row][col]!=None and 'White' in app.board[row][col]
+                and 'Enpassant' not in app.board[row][col]):
                 if isInCheck(app,row,col,blackKingRow,blackKingCol):
                     return True
                 else:
                     continue
     return False
 
+# helper function for checking if the king is in check
 def isInCheck(app,row,col,kingRow,kingCol):
     if (app.board[row][col] == 'WhiteKing' and ((col-kingCol<2
         and col-kingCol>-2 and row-kingRow<2
@@ -591,18 +608,18 @@ def isInCheck(app,row,col,kingRow,kingCol):
         and nothingInWayDiagonallyCheck(app,row,col,kingRow,kingCol)
         and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)) or castle(app,kingRow,kingCol))):
         return True
-    if (app.board[row][col] == 'WhiteQueen' and ((row==kingRow or col==kingCol)
+    elif (app.board[row][col] == 'WhiteQueen' and ((row==kingRow or col==kingCol)
                                           or (((col-kingCol)/(row-kingRow)==1)
                                                or ((col-kingCol)/(row-kingRow)==-1)))
                                                and nothingInWayDiagonallyCheck(app,row,col,kingRow,kingCol)
                                                and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)):
         return True
-    if (app.board[row][col] == 'WhiteBishop' and col!=kingCol
+    elif (app.board[row][col] == 'WhiteBishop' and col!=kingCol
          and row!=kingRow and (((col-kingCol)/(row-kingRow)==1)
                                        or ((col-kingCol)/(row-kingRow)==-1))
                                        and nothingInWayDiagonallyCheck(app,row,col,kingRow,kingCol)):
         return True
-    if (app.board[row][col] == 'WhiteKnight' and ((row-kingRow==1 
+    elif (app.board[row][col] == 'WhiteKnight' and ((row-kingRow==1 
                                           and col-kingCol==2) 
                                           or (row-kingRow==-1 
                                           and col-kingCol==-2) 
@@ -620,31 +637,31 @@ def isInCheck(app,row,col,kingRow,kingCol):
                                           and row-kingRow==-2))
                                           and knightHelperCheck(app,row,col,kingRow,kingCol)):
         return True
-    if (app.board[row][col] == 'WhiteRook' and (row==kingRow or col==kingCol)
+    elif (app.board[row][col] == 'WhiteRook' and (row==kingRow or col==kingCol)
         and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)):
         return True
-    if (app.board[row][col] == 'WhitePawn' and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)
+    elif (app.board[row][col] == 'WhitePawn' and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)
         and pawnMovesCheck(app,row,col,kingRow,kingCol)):
         pawnPromoting(app,kingRow,kingCol)
         return True
-    if (app.board[row][col] == 'BlackKing' and ((col-kingCol<2
+    elif (app.board[row][col] == 'BlackKing' and ((col-kingCol<2
         and col-kingCol>-2 and row-kingRow<2
         and row-kingRow>-2
         and nothingInWayDiagonallyCheck(app,row,col,kingRow,kingCol)
         and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)) or castle(app,kingRow,kingCol))):
         return True
-    if (app.board[row][col] == 'BlackQueen' and ((row==kingRow or col==kingCol)
+    elif (app.board[row][col] == 'BlackQueen' and ((row==kingRow or col==kingCol)
                                           or (((col-kingCol)/(row-kingRow)==1)
                                                or ((col-kingCol)/(row-kingRow)==-1)))
                                                and nothingInWayDiagonallyCheck(app,row,col,kingRow,kingCol)
                                                and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)):
         return True
-    if (app.board[row][col] == 'BlackBishop' and col!=kingCol
+    elif (app.board[row][col] == 'BlackBishop' and col!=kingCol
          and row!=kingRow and (((col-kingCol)/(row-kingRow)==1)
                                        or ((col-kingCol)/(row-kingRow)==-1))
                                        and nothingInWayDiagonallyCheck(app,row,col,kingRow,kingCol)):
         return True
-    if (app.board[row][col] == 'BlackKnight' and ((row-kingRow==1 
+    elif (app.board[row][col] == 'BlackKnight' and ((row-kingRow==1 
                                           and col-kingCol==2) 
                                           or (row-kingRow==-1 
                                           and col-kingCol==-2) 
@@ -662,10 +679,10 @@ def isInCheck(app,row,col,kingRow,kingCol):
                                           and row-kingRow==-2))
                                           and knightHelperCheck(app,row,col,kingRow,kingCol)):
         return True
-    if (app.board[row][col] == 'BlackRook' and (row==kingRow or col==kingCol)
+    elif (app.board[row][col] == 'BlackRook' and (row==kingRow or col==kingCol)
         and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)):
         return True
-    if (app.board[row][col] == 'BlackPawn' and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)
+    elif (app.board[row][col] == 'BlackPawn' and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)
         and pawnMovesCheck(app,row,col,kingRow,kingCol)):
         pawnPromoting(app,kingRow,kingCol)
         return True
@@ -679,9 +696,11 @@ def nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol):
 
     # checks if there is a same side piece on the spot that were moving to
 
-    if app.board[kingRow][kingCol] != None and app.board[row][col]!=None and 'Black' in app.board[row][col] and 'Black' in app.board[kingRow][kingCol]:
+    if (app.board[kingRow][kingCol] != None and app.board[row][col]!=None 
+    and 'Black' in app.board[row][col] and 'Black' in app.board[kingRow][kingCol]):
         return False
-    if app.board[kingRow][kingCol] != None and app.board[row][col]!=None and 'White' in app.board[row][col] and 'White' in app.board[kingRow][kingCol]:
+    if (app.board[kingRow][kingCol] != None and app.board[row][col]!=None 
+        and 'White' in app.board[row][col] and 'White' in app.board[kingRow][kingCol]):
         return False
     
     # for loop checking every block the piece would have to traverse in order to know
@@ -790,6 +809,106 @@ def pawnMovesCheck(app,row,col,kingRow,kingCol):
         if app.board[kingRow][kingCol]=='WhiteEnpassant':
             app.board[kingRow-1][kingCol]=None
         return True
+
+# If white in check is used in the islegal function to see if a move will make the king not be defended
+# from check anymore if the clicked piece moves
+def ifWhiteInCheck(app,row,col):
+    temp=app.board[row][col]
+    app.board[row][col]=app.clicked
+    app.board[app.clickedRow][app.clickedCol]=None
+    clicked=app.clicked
+    clickedRow=app.clickedRow
+    clickedCol=app.clickedCol
+    app.clicked=None
+    app.clickedRow=None
+    app.clickedCol=None
+    if whiteInCheck(app):
+        app.board[row][col]=temp
+        app.board[clickedRow][clickedCol]=clicked
+        app.clicked=clicked
+        app.clickedRow=clickedRow
+        app.clickedCol=clickedCol
+        return False
+    app.clicked=clicked
+    app.clickedRow=clickedRow
+    app.clickedCol=clickedCol
+    app.board[row][col]=temp
+    app.board[app.clickedRow][app.clickedCol]=app.clicked
+    return True
+
+def ifBlackInCheck(app,row,col):
+    temp=app.board[row][col]
+    app.board[row][col]=app.clicked
+    app.board[app.clickedRow][app.clickedCol]=None
+    clicked=app.clicked
+    clickedRow=app.clickedRow
+    clickedCol=app.clickedCol
+    app.clicked=None
+    app.clickedRow=None
+    app.clickedCol=None
+    if blackInCheck(app):
+        app.board[row][col]=temp
+        app.board[clickedRow][clickedCol]=clicked
+        app.clicked=clicked
+        app.clickedRow=clickedRow
+        app.clickedCol=clickedCol
+        return False
+    app.clicked=clicked
+    app.clickedRow=clickedRow
+    app.clickedCol=clickedCol
+    app.board[row][col]=temp
+    app.board[app.clickedRow][app.clickedCol]=app.clicked
+    return True
+
+def whiteInCheckmate(app):
+    moves=[(1,1),(1,0),(0,1),(-1,0),(0,-1),(-1,-1),(1,-1),(-1,1)]
+    for row in range(len(app.board)):
+        for col in range(len(app.board[0])):
+            if app.board[row][col]=="WhiteKing":
+                whiteKingRow=row
+                whiteKingCol=col
+    for move in moves:
+        if (whiteKingRow+move[0]>=0 and whiteKingCol+move[1]>=0 and whiteKingRow+move[0]<8 and 
+            whiteKingCol+move[1]<8 and (app.board[whiteKingRow+move[0]][whiteKingCol+move[1]]==None
+        or 'Enpassant' in app.board[whiteKingRow+move[0]][whiteKingCol+move[1]])):
+            app.board[whiteKingRow][whiteKingCol]=None
+            app.board[whiteKingRow+move[0]][whiteKingCol+move[1]]='WhiteKing'
+            if whiteInCheck(app):
+                app.board[whiteKingRow][whiteKingCol]='WhiteKing'
+                app.board[whiteKingRow+move[0]][whiteKingCol+move[1]]=None
+                continue
+            else:
+                return False
+    app.board[whiteKingRow][whiteKingCol]='WhiteKing'
+    app.board[whiteKingRow+move[0]][whiteKingCol+move[1]]=None
+    return True
+
+def blackInCheckmate(app):
+    moves=[(1,1),(1,0),(0,1),(-1,0),(0,-1),(-1,-1),(1,-1),(-1,1)]
+    for row in range(len(app.board)):
+        for col in range(len(app.board[0])):
+            if app.board[row][col]=="BlackKing":
+                blackKingRow=row
+                blackKingCol=col
+    for move in moves:
+        if (blackKingRow+move[0]>=0 and blackKingCol+move[1]>=0 and blackKingRow+move[0]<8 and 
+            blackKingCol+move[1]<8 and (app.board[blackKingRow+move[0]][blackKingCol+move[1]]==None
+        or 'Enpassant' in app.board[blackKingRow+move[0]][blackKingCol+move[1]])):
+            app.board[blackKingRow][blackKingCol]=None
+            app.board[blackKingRow+move[0]][blackKingCol+move[1]]='BlackKing'
+            if blackInCheck(app):
+                app.board[blackKingRow][blackKingCol]='BlackKing'
+                app.board[blackKingRow+move[0]][blackKingCol+move[1]]=None
+                continue
+            else:
+                return False
+    app.board[blackKingRow][blackKingCol]='BlackKing'
+    app.board[blackKingRow+move[0]][blackKingCol+move[1]]=None
+    return True
+
+# def onStep(app):
+#     app.whiteInCheck=whiteInCheck(app)
+#     app.blackInCheck=blackInCheck(app)
 
 def main():
     runApp(800,800)

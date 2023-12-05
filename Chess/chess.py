@@ -760,7 +760,6 @@ def isInCheck(app,row,col,kingRow,kingCol):
         return True
     elif (app.board[row][col] == 'WhitePawn' and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)
         and pawnMovesCheck(app,row,col,kingRow,kingCol)):
-        pawnPromoting(app,kingRow,kingCol)
         return True
     elif (app.board[row][col] == 'BlackKing' and ((col-kingCol<2
         and col-kingCol>-2 and row-kingRow<2
@@ -802,17 +801,11 @@ def isInCheck(app,row,col,kingRow,kingCol):
         return True
     elif (app.board[row][col] == 'BlackPawn' and nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol)
         and pawnMovesCheck(app,row,col,kingRow,kingCol)):
-        pawnPromoting(app,kingRow,kingCol)
         return True
     return False
 
 def nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol):
-    print(kingRow)
-    print(kingCol)
-    print(row)
-    print(col)
     if kingRow<0 or kingCol<0 or kingRow>=8 or kingCol>=8:
-        print('returning')
         return False
     elif row<0 or col<0 or row>=8 or col>=8:
         return False
@@ -863,7 +856,6 @@ def nothingInWayVerHornallyCheck(app,row,col,kingRow,kingCol):
 def nothingInWayDiagonallyCheck(app,row,col,kingRow,kingCol):
     
     if kingRow<0 or kingCol<0 or kingRow>=8 or kingCol>=8:
-        print('returning')
         return False
     elif row<0 or col<0 or row>=8 or col>=8:
         return False
@@ -875,9 +867,11 @@ def nothingInWayDiagonallyCheck(app,row,col,kingRow,kingCol):
 
     # checks if there is a same side piece on the spot that were moving to
 
-    if app.board[kingRow][kingCol] != None and app.clicked!=None and 'Black' in app.clicked and 'Black' in app.board[kingRow][kingCol]:
+    if (app.board[kingRow][kingCol] != None and app.board[row][col]!=None
+    and 'Black' in app.board[row][col] and 'Black' in app.board[kingRow][kingCol]):
         return False
-    if app.board[kingRow][kingCol] != None and app.clicked!=None and 'White' in app.clicked and 'White' in app.board[kingRow][kingCol]:
+    if (app.board[kingRow][kingCol] != None and app.board[row][col]!=None
+        and 'White' in app.board[row][col] and 'White' in app.board[kingRow][kingCol]):
         return False
     
     # for loop checking every block the piece would have to traverse in order to know
@@ -909,7 +903,6 @@ def nothingInWayDiagonallyCheck(app,row,col,kingRow,kingCol):
 def knightHelperCheck(app,row,col,kingRow,kingCol):
 
     if kingRow<0 or kingCol<0 or kingRow>=8 or kingCol>=8:
-        print('returning')
         return False
     elif row<0 or col<0 or row>=8 or col>=8:
         return False
@@ -1020,7 +1013,7 @@ def whiteInCheckmate(app):
         if (whiteKingRow+move[0]>=0 and whiteKingCol+move[1]>=0 and whiteKingRow+move[0]<8 and 
             whiteKingCol+move[1]<8 and (app.board[whiteKingRow+move[0]][whiteKingCol+move[1]]==None
         or 'Enpassant' in app.board[whiteKingRow+move[0]][whiteKingCol+move[1]]
-        or 'White' in app.board[whiteKingRow+move[0]][whiteKingCol+move[1]])):
+        or 'Black' in app.board[whiteKingRow+move[0]][whiteKingCol+move[1]])):
             temp=app.board[whiteKingRow+move[0]][whiteKingCol+move[1]]
             app.board[whiteKingRow][whiteKingCol]=None
             app.board[whiteKingRow+move[0]][whiteKingCol+move[1]]='WhiteKing'
@@ -1067,14 +1060,18 @@ def blackInCheckmate(app):
                 return False
     for row in range(len(app.board)):
         for col in range(len(app.board[0])):
-            if (app.board[row][col]!=None and 'White' in app.board[row][col]
+            if (app.board[row][col]!=None and 'Black' in app.board[row][col]
                 and 'Enpassant' not in app.board[row][col]):
                 if isInCheckmate(app,row,col,app.pieceCheckingBlackRow,app.pieceCheckingBlackCol):
                     return False
                 for move in app.possibleMoves[app.pieceCheckingBlack]:
-                    if isInCheckmate(app,row,col,move[0],move[1]):
+                    if isInCheckmate(app,row,col,app.pieceCheckingBlackRow+move[0]
+                                     ,app.pieceCheckingBlackCol+move[1]):
                         return False
     return True
+
+# this function is used when the game needs to verify whether a piece can get in the
+# way of check and therefore you are not in checkmate
 
 def isInCheckmate(app,row,col,moveRow,moveCol):
     if (row>=0 and col>=0 and row<8 and col<8 

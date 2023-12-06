@@ -145,6 +145,22 @@ def onMousePress(app,mouseX,mouseY):
         app.board.movePiece(mouseX,mouseY)
     pass
 
+def onKeyPress(app,key):
+    if key=='r':
+        app.board.reset()
+    if key=='c':
+        app.board.castleTest()
+    if key=='d':
+        app.board.castleTestAfterKingMoved()
+    if key=='f':
+        app.board.checkPosition()
+    if key=='g':
+        app.board.mateInOnePos()
+    if key=='y':
+        app.board.cantCastleIntoCheck()
+    if key=='p':
+        app.board.pawnPromotePos()
+
 def main():
     runApp(800,800)
 

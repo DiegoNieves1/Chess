@@ -1,10 +1,22 @@
 from cmu_graphics import *
 from imageManager import *
 from board import Board
+import os, pathlib
 
 def onAppStart(app):
     loadImages(app)
     app.board=Board(app)
+    # declaring and instantiating sounds that were gotten from
+    # chess.com (https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3)
+    # (https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3)
+    # (https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3)
+    # (https://images.chesscomfiles.com/chess-themes/sounds/_WEBM_/default/game-end.webm)
+    # i had to convert the game end file to mp3 with (https://pixabay.com/sound-effects/search/chess/)
+    app.capture = loadSound("chessSounds/capture.mp3")
+    app.check = loadSound("chessSounds/move-check.mp3")
+    app.move = loadSound("chessSounds/move-self.mp3")
+    app.checkmate = loadSound("chessSounds/game-end.mp3")
+    app.playing = False
     pass
 def redrawAll(app):
     drawBoard(app)
@@ -44,6 +56,26 @@ def drawBoard(app):
                         100+(app.board.boardHeightPixels/app.board.cols)*col,
                         (app.board.boardWidthPixels/app.board.rows),
                         (app.board.boardHeightPixels/app.board.cols),fill=rgb(235,236,210))
+                
+    # This if statement will create the square that shows up when white pieces are clicked
+    # The color is straight from Chess.com
+    if (app.board.clicked!=None and not ((app.board.clickedRow%2==0 and app.board.clickedCol%2==1) 
+        or (app.board.clickedCol%2==0 and app.board.clickedRow%2==1)) and app.board.clickedRow!=None 
+        and app.board.clickedCol!=None):
+        drawRect(100+(app.board.boardWidthPixels/app.board.cols)*app.board.clickedCol,
+                 100+(app.board.boardHeightPixels/app.board.rows)*app.board.clickedRow,
+                 (app.board.boardHeightPixels/app.board.rows),(app.board.boardHeightPixels/app.board.cols),
+                 fill=rgb(244,245,143))
+    # This if statement will create the square that shows up when black pieces are clicked
+    # The color is straight from Chess.com
+    if (app.board.clicked!=None and ((app.board.clickedRow%2==0 and app.board.clickedCol%2==1) 
+        or (app.board.clickedCol%2==0 and app.board.clickedRow%2==1)) and app.board.clickedRow!=None
+        and app.board.clickedCol!=None):
+        drawRect(100+(app.board.boardWidthPixels/app.board.cols)*app.board.clickedCol,
+                 100+(app.board.boardHeightPixels/app.board.rows)*app.board.clickedRow,
+                 (app.board.boardHeightPixels/app.board.rows),(app.board.boardHeightPixels/app.board.cols),
+                 fill=rgb(185,203,84))
+
     #these nested loops draw the pieces which are all copied from chess.com
     #images are from chess.com but I got them from https://github.com/lichess-org/lila/issues/3411
     #the background of the images were removed with https://www.remove.bg/
@@ -142,10 +174,11 @@ def onMousePress(app,mouseX,mouseY):
     if app.board.whitePawnIsPromoting or app.board.blackPawnIsPromoting:
         app.board.pawnPromotionClicks(mouseX,mouseY)
     else:
-        app.board.movePiece(mouseX,mouseY)
+        app.board.movePiece(app,mouseX,mouseY)
     pass
 
 def onKeyPress(app,key):
+    # this is used to setup the shortcuts in the readme file
     if key=='r':
         app.board.reset()
     if key=='c':
@@ -160,6 +193,16 @@ def onKeyPress(app,key):
         app.board.cantCastleIntoCheck()
     if key=='p':
         app.board.pawnPromotePos()
+
+#this was gotten from the tech demo
+#NOT MY CODE
+def loadSound(relativePath):
+    # Convert to absolute path (because pathlib.Path only takes absolute paths)
+    absolutePath = os.path.abspath(relativePath)
+    # Get local file URL
+    url = pathlib.Path(absolutePath).as_uri()
+    # Load Sound file from local URL
+    return Sound(url)
 
 def main():
     runApp(800,800)

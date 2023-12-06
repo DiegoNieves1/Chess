@@ -79,7 +79,7 @@ class Board():
                             'BlackPawn':[(2,0),(-2,0),(1,0),(-1,0),(1,1),(-1,-1),(1,-1),(-1,1)]}
         
     # This function is for moving the pieces
-    def movePiece(self,mouseX,mouseY):
+    def movePiece(self,app,mouseX,mouseY):
         for row in range(self.rows):
             for col in range(self.cols):
                 # setting up which piece was clicked if one is not already clicked
@@ -94,12 +94,16 @@ class Board():
                     self.clickedRow=row
                     self.clickedCol=col
                 # switching positions of piece and adding one to the turn
-                # the if statement is checking whether the click is on a legal move 
+                # the if statement is checking whether the click is on a legal move
+                # also adding a sound depending on the situation of the board
                 elif ((mouseX>(100+(self.boardWidthPixels/self.cols)*col)
                 and mouseX<((100+(self.boardWidthPixels/self.cols)*col)+self.boardWidthPixels/self.rows))
                 and(mouseY>(100+(self.boardHeightPixels/self.rows)*row)
                 and mouseY<((100+(self.boardHeightPixels/self.rows)*row)+self.boardHeightPixels/self.cols))
                 and self.clicked!=None and self.isLegal(row,col)):
+                    #playing capture sound if capturing
+                    if self.board[row][col]!=None:
+                        app.capture.play(restart=True)
                     self.board[self.clickedRow][self.clickedCol]=None
                     self.board[row][col]=self.clicked
                     self.turn+=1
@@ -113,6 +117,13 @@ class Board():
                     if self.blackInCheck==True:
                         self.blackInCheckmate=self.isBlackInCheckmate()
                     self.removeEnpassants()
+                    #deciding which sound to play depending on what conditionals are met
+                    if self.whiteInCheckmate or self.blackInCheckmate:
+                        app.checkmate.play(restart = True)
+                    elif self.whiteInCheck or self.blackInCheck:
+                        app.check.play(restart = True)
+                    else:
+                        app.move.play(restart = True)
                 
                 # this if statement checks whether the player clicked on an empty non legal square after 
                 # clicking some object and if unclicks the piece so that the player can pick new piece
@@ -1409,6 +1420,7 @@ class Board():
                             'BlackKnight':[(1,2),(2,1),(-1,2),(-2,1),(1,-2),(2,-1),(-1,-2),(-2,-1)],
                             'BlackPawn':[(2,0),(-2,0),(1,0),(-1,0),(1,1),(-1,-1),(1,-1),(-1,1)]}
     
+    # this function will set the board to test castling if c is pressed
     def castleTest(self):
         self.turn=0
         self.board=[['BlackRook','BlackKnight','BlackBishop','BlackQueen','BlackKing','BlackBishop','BlackKnight','BlackRook'],
@@ -1482,7 +1494,8 @@ class Board():
                             'BlackKnight':[(1,2),(2,1),(-1,2),(-2,1),(1,-2),(2,-1),(-1,-2),(-2,-1)],
                             'BlackPawn':[(2,0),(-2,0),(1,0),(-1,0),(1,1),(-1,-1),(1,-1),(-1,1)]}
         
-
+    # this function will set the board to show you cannot castle if the king already moved
+    # after pressing d
     def castleTestAfterKingMoved(self):
         self.turn=0
         self.board=[['BlackRook','BlackKnight','BlackBishop','BlackQueen','BlackKing','BlackBishop','BlackKnight','BlackRook'],
@@ -1555,6 +1568,8 @@ class Board():
                                     (-1,0),(-2,0),(-3,0),(-4,0),(-5,0),(-6,0),(-7,0),(-8,0)],
                             'BlackKnight':[(1,2),(2,1),(-1,2),(-2,1),(1,-2),(2,-1),(-1,-2),(-2,-1)],
                             'BlackPawn':[(2,0),(-2,0),(1,0),(-1,0),(1,1),(-1,-1),(1,-1),(-1,1)]}
+    
+    # this function will just set the board to be one move away from check if f is pressed
     def checkPosition(self):
         self.turn=1
         self.board=[['BlackRook','BlackKnight','BlackBishop','BlackQueen','BlackKing',None,'BlackKnight','BlackRook'],
@@ -1628,6 +1643,7 @@ class Board():
                             'BlackKnight':[(1,2),(2,1),(-1,2),(-2,1),(1,-2),(2,-1),(-1,-2),(-2,-1)],
                             'BlackPawn':[(2,0),(-2,0),(1,0),(-1,0),(1,1),(-1,-1),(1,-1),(-1,1)]}
     
+    # this function will set the board to be one move away from checkmate if g is pressed
     def mateInOnePos(self):
         self.turn=1
         self.board=[[None,None,'BlackKing','BlackRook',None,'BlackRook',None,None],
@@ -1700,6 +1716,9 @@ class Board():
                                     (-1,0),(-2,0),(-3,0),(-4,0),(-5,0),(-6,0),(-7,0),(-8,0)],
                             'BlackKnight':[(1,2),(2,1),(-1,2),(-2,1),(1,-2),(2,-1),(-1,-2),(-2,-1)],
                             'BlackPawn':[(2,0),(-2,0),(1,0),(-1,0),(1,1),(-1,-1),(1,-1),(-1,1)]}
+    
+    # this function will set the board to be in a position that shows you cannot castle
+    # into check, it will be triggered when y is pressed
     def cantCastleIntoCheck(self):
         self.turn=0
         self.board=[[None,None,'BlackKing',None,None,None,'BlackRook',None],
@@ -1773,6 +1792,8 @@ class Board():
                             'BlackKnight':[(1,2),(2,1),(-1,2),(-2,1),(1,-2),(2,-1),(-1,-2),(-2,-1)],
                             'BlackPawn':[(2,0),(-2,0),(1,0),(-1,0),(1,1),(-1,-1),(1,-1),(-1,1)]}
     
+    # this function will set the board to be in a position that shows you can promote pawns,
+    # it will be triggered when y is pressed
     def pawnPromotePos(self):
         self.turn=0
         self.board=[[None,'BlackKing','BlackKnight',None,None,None,None,None],

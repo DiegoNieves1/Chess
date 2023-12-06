@@ -30,6 +30,10 @@ def redrawAll(app):
         drawLabel('Black Wins!!!',app.width/2,50,size=40,fill='white',bold=True)
     if app.board.blackInCheckmate==True:
         drawLabel('White Wins!!!',app.width/2,50,size=40,fill='white',bold=True)
+    if app.board.turn%2==0:
+        drawLabel("White's Turn",app.width/2,app.height-50,size=35,fill='white',bold=True)
+    if app.board.turn%2==1:
+        drawLabel("Black's Turn",app.width/2,app.height-50,size=35,fill='white',bold=True)
     pass
 
 def drawBoard(app):

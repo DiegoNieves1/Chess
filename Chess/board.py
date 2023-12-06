@@ -943,6 +943,7 @@ class Board():
                     return False
         return True
     
+    # checks if the position that the knight is moving to doesnt have a same color piece on it
     def knightHelperCheck(self,row,col,kingRow,kingCol):
 
         if kingRow<0 or kingCol<0 or kingRow>=8 or kingCol>=8:
@@ -955,41 +956,62 @@ class Board():
         if self.board[kingRow][kingCol] != None and 'White' in self.board[row][col] and 'White' in self.board[kingRow][kingCol]:
             return False
         return True
-
+    
+    # checks if a legal move is being done by the pawn
     def pawnMovesCheck(self,row,col,kingRow,kingCol):
-        #checks if there are any pieces in the way of a verically/horizontally moving piece
-
+        
+        # vertical movement is the amount of spaces vertically the pawn is moving
+        # and horizontal movement is the amount of spaces horizontally the pawn is moving
         verticalMovement= row-kingRow
         horizontalMovement= kingCol-col
 
+        # checks if the pawn can move 2 spaces and if it can it setsup an enpassant
+        # behind the pawn
         if verticalMovement==2 and row==6 and col==kingCol:
             self.board[kingRow+1][kingCol]='WhiteEnpassant'
             return True
+        # checks if the pawn can move 2 spaces and if it can it setsup an enpassant
+        # behind the pawn
         elif verticalMovement==-2 and row==1 and col==kingCol:
             self.board[kingRow-1][kingCol]='BlackEnpassant'
             return True
+        # checks if the pawn is moving more than 1 spot after checking that it
+        # isnt doing one of the legal 2 spots moves so that it can return false
+        # and confirm that it is an illegal move 
         elif abs(verticalMovement)>1:
             return False
+        # checks to see if pawn is only moving one row in the right direction
+        # and there is nothing in its way
         elif (verticalMovement==1 and horizontalMovement==0 and
         'WhitePawn'==self.board[row][col]) and self.board[kingRow][kingCol]==None:
             return True
+        # checks if pawn is trying to eat an enpassant so that it can remove
+        # the pawn in aswell
         elif (verticalMovement==1 and abs(horizontalMovement)==1 and 'WhitePawn' == self.board[row][col]
             and self.board[kingRow][kingCol]!=None):
             if self.board[kingRow][kingCol]=='BlackEnpassant':
                 self.board[kingRow+1][kingCol]=None
             return True
+        # checks to see if pawn is only moving one row in the right direction
+        # and there is nothing in its way
         elif (verticalMovement==-1 and horizontalMovement==0 and
         'BlackPawn'==self.board[row][col] and self.board[kingRow][kingCol]==None):
             return True
+        # checks if pawn is trying to eat an enpassant so that it can remove
+        # the pawn in aswell
         elif (verticalMovement==-1 and abs(horizontalMovement)==1 and 'BlackPawn' == self.board[row][col]
             and self.board[kingRow][kingCol]!=None):
             if self.board[kingRow][kingCol]=='WhiteEnpassant':
                 self.board[kingRow-1][kingCol]=None
             return True
     
-    # If white in check is used in the islegal function to see if a move will make the king not be defended
-    # from check anymore if the clicked piece moves
+    # If white in check is used in the islegal function to see 
+    # if a move will make the king not be defended
+    # from check anymore assuming the clicked piece moves
     def ifWhiteInCheck(self,row,col):
+        # has value is used to make sure we only change self.clicked if it is not none
+        # because isWhiteInCheck only works when self.clicked is none so if it's already none we dont
+        # need to change anything but if it is we have to change it to self.
         hasValue=self.clickedCol!=None and self.clickedRow!=None and self.clicked!=None
         if hasValue and (row>=0 and col>=0 and row<8 and col<8):
             temp=self.board[row][col]
@@ -1001,6 +1023,7 @@ class Board():
             self.clicked=None
             self.clickedRow=None
             self.clickedCol=None
+            #checking the move make the king be in check
             if self.isWhiteInCheck():
                 if hasValue:
                     self.board[row][col]=temp
@@ -1009,6 +1032,8 @@ class Board():
                     self.clickedRow=clickedRow
                     self.clickedCol=clickedCol
                 return False
+            # this checks if the values were changed so that
+            # if they were the values are turned back
             if hasValue:
                 self.clicked=clicked
                 self.clickedRow=clickedRow
@@ -1018,7 +1043,13 @@ class Board():
             return True
         return False
 
+    # If black in check is used in the islegal function to see 
+    # if a move will make the king not be defended
+    # from check anymore assuming the clicked piece moves
     def ifBlackInCheck(self,row,col):
+        # has value is used to make sure we only change self.clicked if it is not none
+        # because isBlackInCheck only works when self.clicked is none so if it's already none we dont
+        # need to change anything but if it is we have to change it to self.
         hasValue=self.clickedCol!=None and self.clickedRow!=None and self.clicked!=None
         if hasValue and (row>=0 and col>=0 and row<8 and col<8):
             temp=self.board[row][col]
@@ -1030,6 +1061,7 @@ class Board():
             self.clicked=None
             self.clickedRow=None
             self.clickedCol=None
+        #checking the move make the king be in check
         if self.isBlackInCheck():
             if hasValue:
                 self.board[row][col]=temp
@@ -1038,6 +1070,8 @@ class Board():
                 self.clickedRow=clickedRow
                 self.clickedCol=clickedCol
             return False
+        # this checks if the values were changed so that
+        # if they were the values are turned back
         if hasValue:
             self.clicked=clicked
             self.clickedRow=clickedRow
@@ -1046,12 +1080,15 @@ class Board():
             self.board[self.clickedRow][self.clickedCol]=self.clicked
         return True
 
+    # returns whether the white king is in checkmate
     def isWhiteInCheckmate(self):
+        # this for loop is used to find the position of the king
         for row in range(len(self.board)):
             for col in range(len(self.board[0])):
                 if self.board[row][col]=="WhiteKing":
                     whiteKingRow=row
                     whiteKingCol=col
+        # this for loop checks that the king cannot move out of the check
         for move in self.possibleMoves['WhiteKing']:
             if (whiteKingRow+move[0]>=0 and whiteKingCol+move[1]>=0 and whiteKingRow+move[0]<8 and 
             whiteKingCol+move[1]<8 and (self.board[whiteKingRow+move[0]][whiteKingCol+move[1]]==None
@@ -1068,6 +1105,8 @@ class Board():
                     self.board[whiteKingRow][whiteKingCol]='WhiteKing'
                     self.board[whiteKingRow+move[0]][whiteKingCol+move[1]]=temp
                     return False
+        # this for loop checks if there are any pieces that can be moved in the
+        # way of the check
         for row in range(len(self.board)):
             for col in range(len(self.board[0])):
                 temp=self.clicked
@@ -1076,6 +1115,7 @@ class Board():
                 self.clicked=self.board[row][col]
                 self.clickedRow=row
                 self.clickedCol=col
+                #checking if the row and col that are being looked has a white piece
                 if (self.board[row][col]!=None and 'White' in self.board[row][col]
                     and 'Enpassant' not in self.board[row][col]):
                     print(self.isInCheckmate(row,col,self.pieceCheckingWhiteRow,self.pieceCheckingWhiteCol))
@@ -1084,6 +1124,7 @@ class Board():
                         self.clickedRow=tempRow
                         self.clickedCol=tempCol
                         return False
+                    # checking all the moves that the piece cheking the king can make
                     for move in self.possibleMoves[self.pieceCheckingWhite]:
                         print(self.isInCheckmate(row,col,self.pieceCheckingWhiteRow+move[0]
                                                  ,self.pieceCheckingWhiteCol+move[1]))
@@ -1099,11 +1140,13 @@ class Board():
         return True
     
     def isBlackInCheckmate(self):
+        # this for loop is used to find the position of the king
         for row in range(len(self.board)):
             for col in range(len(self.board[0])):
                 if self.board[row][col]=="BlackKing":
                     blackKingRow=row
                     blackKingCol=col
+        # this for loop checks that the king cannot move out of the check
         for move in self.possibleMoves['BlackKing']:
             if (blackKingRow+move[0]>=0 and blackKingCol+move[1]>=0 and blackKingRow+move[0]<8 and 
             blackKingCol+move[1]<8 and (self.board[blackKingRow+move[0]][blackKingCol+move[1]]==None
@@ -1120,6 +1163,8 @@ class Board():
                     self.board[blackKingRow][blackKingCol]='BlackKing'
                     self.board[blackKingRow+move[0]][blackKingCol+move[1]]=temp
                     return False
+        # this for loop checks if there are any pieces that can be moved in the
+        # way of the check
         for row in range(len(self.board)):
             for col in range(len(self.board[0])):
                 temp=self.clicked
@@ -1128,6 +1173,7 @@ class Board():
                 self.clicked=self.board[row][col]
                 self.clickedRow=row
                 self.clickedCol=col
+                #checking if the row and col that are being looked has a black piece
                 if (self.board[row][col]!=None and 'Black' in self.board[row][col]
                     and 'Enpassant' not in self.board[row][col]):
                     print(self.isInCheckmate(row,col,self.pieceCheckingBlackRow,self.pieceCheckingBlackCol))
@@ -1136,6 +1182,7 @@ class Board():
                         self.clickedRow=tempRow
                         self.clickedCol=tempCol
                         return False
+                    # checking all the moves that the piece cheking the king can make
                     for move in self.possibleMoves[self.pieceCheckingBlack]:
                         print(self.isInCheckmate(row,col,self.pieceCheckingBlackRow+move[0]
                                                  ,self.pieceCheckingBlackCol+move[1]))
@@ -1151,6 +1198,8 @@ class Board():
         return True
 
     def isInCheckmate(self,row,col,moveRow,moveCol):
+        
+        # checking if the king can move
         if (row>=0 and col>=0 and row<8 and col<8 
             and self.board[row][col] == 'WhiteKing' and (col-moveCol<2
             and col-moveCol>-2 and row-moveRow<2
@@ -1159,6 +1208,8 @@ class Board():
             and self.nothingInWayVerHornallyCheck(row,col,moveRow,moveCol))
             and self.ifWhiteInCheck(moveRow,moveCol)):
             return True
+        
+        # checking if the queen can move
         elif (self.board[row][col] == 'WhiteQueen' and row>=0 and col>=0 and row<8 and col<8
                                                     and ((row==moveRow or col==moveCol)
                                             or (((col-moveCol)/(row-moveRow)==1)
@@ -1167,6 +1218,8 @@ class Board():
                                                 and self.nothingInWayVerHornallyCheck(row,col,moveRow,moveCol)
                                                 and self.ifWhiteInCheck(moveRow,moveCol)):
             return True
+        
+        # checking if the bishop can move
         elif (self.board[row][col] == 'WhiteBishop' and row>=0 and col>=0 and row<8 and col<8
                                             and col!=moveCol
                                             and row!=moveRow and (((col-moveCol)/(row-moveRow)==1)
@@ -1174,6 +1227,8 @@ class Board():
                                             and self.nothingInWayDiagonallyCheck(row,col,moveRow,moveCol)
                                             and self.ifWhiteInCheck(moveRow,moveCol)):
             return True
+        
+        # checking if the knight can move
         elif (self.board[row][col] == 'WhiteKnight' and row>=0 and col>=0 and row<8 and col<8
                                             and ((row-moveRow==1 
                                             and col-moveCol==2) 
@@ -1194,16 +1249,22 @@ class Board():
                                             and self.knightHelperCheck(row,col,moveRow,moveCol)
                                             and self.ifWhiteInCheck(moveRow,moveCol)):
             return True
+        
+        # checking if the rook can move
         elif (self.board[row][col] == 'WhiteRook' and row>=0 and col>=0 and row<8 and col<8
             and (row==moveRow or col==moveCol)
             and self.nothingInWayVerHornallyCheck(row,col,moveRow,moveCol)
             and self.ifWhiteInCheck(moveRow,moveCol)):
             return True
+        
+        # checking if the pawn can move
         elif (self.board[row][col] == 'WhitePawn' and row>=0 and col>=0 and row<8 and col<8
             and self.nothingInWayVerHornallyCheck(row,col,moveRow,moveCol)
             and self.pawnMovesCheck(row,col,moveRow,moveCol) and self.ifWhiteInCheck(moveRow,moveCol)):
             self.pawnPromoting(moveRow,moveCol)
             return True
+        
+        # checking if the king can move
         elif (self.board[row][col] == 'BlackKing' and row>=0 and col>=0 and row<8 and col<8
             and (col-moveCol<2
             and col-moveCol>-2 and row-moveRow<2
@@ -1212,6 +1273,8 @@ class Board():
             and self.nothingInWayVerHornallyCheck(row,col,moveRow,moveCol)) 
             and self.ifBlackInCheck(moveRow,moveCol)):
             return True
+        
+        # checking if the queen can move
         elif (self.board[row][col] == 'BlackQueen' and row>=0 and col>=0 and row<8 and col<8 
                                                 and ((row==moveRow or col==moveCol)
                                                 or (((col-moveCol)/(row-moveRow)==1)
@@ -1220,6 +1283,8 @@ class Board():
                                     and self.nothingInWayVerHornallyCheck(row,col,moveRow,moveCol)
                                     and self.ifBlackInCheck(moveRow,moveCol)):
             return True
+        
+        # checking if the bishop can move
         elif (self.board[row][col] == 'BlackBishop' and row>=0 and col>=0 and row<8 and col<8
                                         and col!=moveCol
                                         and row!=moveRow and (((col-moveCol)/(row-moveRow)==1)
@@ -1227,6 +1292,8 @@ class Board():
                                     and self.nothingInWayDiagonallyCheck(row,col,moveRow,moveCol)
                                     and self.ifBlackInCheck(moveRow,moveCol)):
             return True
+        
+        # checking if the knight can move
         elif (self.board[row][col] == 'BlackKnight' and row>=0 and col>=0 and row<8 and col<8
                                             and ((row-moveRow==1 
                                             and col-moveCol==2) 
@@ -1247,11 +1314,15 @@ class Board():
                                             and self.knightHelperCheck(row,col,moveRow,moveCol)
                                             and self.ifBlackInCheck(moveRow,moveCol)):
             return True
+        
+        # checking if the rook can move
         elif (self.board[row][col] == 'BlackRook' and row>=0 and col>=0 and row<8 and col<8
             and (row==moveRow or col==moveCol)
             and self.nothingInWayVerHornallyCheck(row,col,moveRow,moveCol)
             and self.ifBlackInCheck(moveRow,moveCol)):
             return True
+        
+        # checking if the pawn can move
         elif (self.board[row][col] == 'BlackPawn' and row>=0 and col>=0 and row<8 and col<8
             and self.nothingInWayVerHornallyCheck(row,col,moveRow,moveCol)
             and self.pawnMovesCheck(row,col,moveRow,moveCol)
